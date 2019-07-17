@@ -100,6 +100,88 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
     			11. Check the voxel resolution using gen_utils.match_target_vox_res( ) and potentially reslice dwi_prep images
     			12. Build a gradient table using gen_utils.make_gtap_and_bmask( )
     			13. Get b0 header and affine
-			14. 
+			14. Begin analysis of anatomical data by checking to make sure that there are no pre-existing directories with names of what the program will be using. If there are, this program will delete it.
+    			15. Reorient the t1w data if necessary by using gen_utlis.reorient_t1w( ), getting the potentially edited path to t1w data back
+    			16. Determine where you want the tractography data stored (reg_style) either locally or not
+			17. 
+			
 		Outputs:
 
+
+
+gen_utils.py
+Purpose: General functions to be used during the pipeline
+
+	reorient_dwi( )
+		Inputs:
+			dwi_prep = location of the eddy corrected dwi data
+			bvecs = location of the rescaled bvec file
+			namer = the namer variable containing all relevant naming data
+		Description:
+		    	1. imports shutil
+    			2. uses os.poopen to open dwi_prep and read the first line of the file, this returns what orientation convention the data is using (Neurological or Radiological)
+    			3. copy dwi_prep and bvecs files into the same output directory but with new names, these will be the files that are re-orientated
+    			4. run os.popen to open dwi_prep and get the qform string (vectors describing how the data is related to realspace)
+    			5. Convert the dwi_prep data to the Radiological format and then reorient it. The same steps are taken whether or not it is in Radiological format, with a simple calling of fslorient -forceradiological added at the end if it isn’t. Reorientation includes:
+        			1. Looking at the qform to determine whether it needs Posterior-Anterior Reorientation (-x -y z)or Inferior-Superior Reorientation (-x y -z). If it doesn’t, then these steps are skipped.
+        			2. calling fslswapdim to reorient the data and save it as either /output/prep_dwi/dwi_reor_Pa.nii.gz or .../dwi_reor_IS.nii.gz
+        			3. changing the bvecs accordingly to account for the reorientation ans saving them over the existing bvec files
+        			4. saving the new dwi files over the existing ones if reorientation occurred
+        		6. return values
+		Outputs:
+			t1w = location of t1w data
+
+	match_target_vox_res( )
+		Reslices input MRI file if it doesn’t match the targeted voxel resolution. Can take dwi or t1w scans.
+		Inputs:
+			img_file = path to image file you want to analyze
+			vox_size = voxel size you
+			namer = the namer variable containing all relevant naming data
+			sens = the format of the image file
+		Description:
+    			1. imports reslice from dipy.align.reslice
+    			2. load the image file and get various parameters from it (affine, header, zooms)
+    			3. determine if the given voxel size (zooms) is either 1mm or 2 mm. If it is not then:
+        			1. copy the existing image file to the same directory, adding “_pre_res” to the end of it
+        			2. run dipy’s reslice function on the data to get it to the new resolution, then take the data and nibable.Nifti1Image to convert the data into a image file that you can save over the existing image file. Also include the qform, sform, and header information into the nifti file
+		Outputs:
+			img_file = path the the image file that has been resliced
+
+	make_gtab_and_bmask( )
+		Takes bval and bvec files and produces a structure in dipy format
+		Inputs:
+			fbval = path to bval
+			fbvec = path to bvec 
+			dwi_file = path to dwi file
+			outdir = path to were you want the output files saved
+		Description:
+    			1. read in bval and bvec data
+    			2. create a gradient table from that data using gradient_table from dipy and set the b0 threshold to the minimum bval value
+    			3. Locate where the b0 indices are by looking for where in bval it equals the threshold
+   			4. Extract and combine all the b0s collected from the dwi file using fslroi and saving the output filed into /output/dwi/preproc/#_B0.nii.gz
+    			5. Take all the b0s and average them and save the resulting image into /output/dwi/preproc/nodif_B0.nii.gz
+    			6. Then take the average image and generate a b0 brain mask using bet
+    			7. Return relevant data
+		Outputs:
+			gtab = gradient table
+			nodif_B0 = path to averaged b0 image
+			nodif_B0_mask = b0 brain mask
+			
+			
+gen_reg.py
+Purpose:
+
+	dmri_reg <Class>
+		Creates a variable containing all the pathing information required for tractography
+		Inputs:
+			namer = the namer variable containing BIDS directory tree
+			nodif_B0 = path to the b0 brain mask
+			t1w_in = path to t1w scan to be analyzed
+			vox_size = voxel size (in the form of ‘2mm’)
+			simple = simple
+		Description:
+    			1. take in relevant pathing strings and create an expansive list of paths for the various outputs about to be generated by the pipeline
+    			2. 
+		Outputs:
+			self
+		
