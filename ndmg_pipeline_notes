@@ -1,0 +1,90 @@
+Getting Started:
+
+The ndmg pipeline can be used to generate connectomes as a command-line utility on BIDS datasets with the following command:
+
+ndmg_bids /input/bids/dataset /output/directory participant
+
+Note that more options are available which can be helpful if running on the Amazon cloud, which can be found and documented by running ndmg_bids -h. If you do not have a BIDS organized dataset, you an use a slightly more complicated interface which is made available and is documented with ndmg_pipeline -h.
+If running with the Docker container shown above, the entrypoint is already set to ndmg_bids, so the pipeline can be run directly from the host-system command line as follows:
+docker run -ti -v /path/to/local/data:/data bids/ndmg /data/ /data/outputs participant
+
+
+Questions/Difficulties:
+- In ndmg_bids.session_level, what is being done in args = [[ dw, bval, bvec, anat,...] for (dw, bval, bvec, anat) in zip(dwis, bvals, bvecs, anats)] ?
+- Question 2
+- Question 3
+
+
+
+
+
+The notes below give a simplified explaination of the process the pipeline follows:
+
+ndmg_bids.py
+Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS organized dataset
+
+	main( )
+		Inputs:
+			Run [ndmg_bids -h] to get a full list of potential inputs. Required inputs are:
+			bids_dir = path to the BIDS formated directory containt the input dataset
+			output_dir = desired location of the output directories
+			{participant, group} = level of the analysis that will be performed
+			
+		Description:
+			1. Reads in the inputs given by the user
+			2. Determines if a s3 bucket is being called and if the path provided is valid. If it is then it reads it in.
+			3. Passes inputs onto session_level( ) for further analysis
+		Outputs:
+			User input parameters
+
+
+
+	session_level( )
+		Inputs:
+		
+		Description:
+			1. Sends atlas directory, modality, and voxel_size to get_atlas( )
+			2. Recieves labels, reference brain, reference mask, atlas brain and lv_mask from get_atlas( )
+			3. Sorts through the reference files to only select the ones that match atlas_select's atlas (i.e. deskian)
+			4. Uses sweep_directory( ) to get the paths for the bval and bvec files.
+			5. Depending on the modality specified by the user:
+				1. For dwi data, create a list 'args' which contains the location of the dwi, bvec, bval, anatomical, reference, mask, and output directory
+				2. For functional data, ...
+		Outputs:
+			None
+			
+			
+	get_atlas( )
+		Inputs:
+		
+		Description:
+		
+		Outputs:
+		
+		
+ndmg_dwi_pipeline.py
+Purpose: To create a brain connectome graph from MRI data. This program is where the majority of the analysis is facilitated.
+
+	ndmg_dwi_pipeline( )
+		Inputs:
+		    
+		Description:
+			1. Print all inputs received from ndmg_bids.py and double check that all variables are assigned something
+		    	2. Create “namer”, a variable of the name_resource class in bids_utils.py. Namer contains all of the path and settings information for the desired run. It includes: subject, anatomical scan, session, run number, task, resolution, output directory. It also contains functions to edit and recall information contained within
+		    	3. Check if the output directory exists, if not then create the directory
+		    	4. Create the directory tree required for placing the outputs of the analysis and add them to namer
+		    	5. Create derivative and connectome output file names
+		    	6. Begin Preprocessing by performing eddy correction, deleting prexisting dwi files. The commands to run FSL’s eddy_correct program and written into the terminal and the system is then asked to execute the task on the terminal using os.system(cmd) (a really funny way to do that). Eddy correct data is placed into the output directory.
+			7. Copy the input bval and bvec files into the output/prep_dwi directory for future use
+    			8. Import read_bvals_bvecs from dipy.io, then proceed to check that the bvec and bval files aren’t corrupted. This is done by making sure that anywhere in the array bvals = 0, bvecs = 0. If there is any point where bvals > 50 and the corresponding bvector is [0,0,0], throw an error.
+    			9. Rescale the bvecs using rescale_bvec.py in ndmg.preproc, which works by:
+        			1. making sure that the bvec array has the dimensions X rows and 3 columns, otherwise it transposes it
+        			2. normalizing any value in in bvec that doesn’t have a vector norm close to 0
+        			3. save rescaled bvec data to bvec_scaled.bvec file in /output/dwi/preproc/
+    			10. Determines the orientation of the preprocessed dwi files by sending them to gen_utils.reorient_dwi( ) and receiving the potentially changed dwi_prep and bvec file paths
+    			11. Check the voxel resolution using gen_utils.match_target_vox_res( ) and potentially reslice dwi_prep images
+    			12. Build a gradient table using gen_utils.make_gtap_and_bmask( )
+    			13. Get b0 header and affine
+			14. 
+		Outputs:
+
