@@ -41,7 +41,7 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 
 	session_level( )
 		Inputs:
-		
+			User input parameters from main( )
 		Description:
 			1. Sends atlas directory, modality, and voxel_size to get_atlas( )
 			2. Recieves labels, reference brain, reference mask, atlas brain and lv_mask from get_atlas( )
@@ -49,18 +49,33 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 			4. Uses sweep_directory( ) to get the paths for the bval and bvec files.
 			5. Depending on the modality specified by the user:
 				1. For dwi data, create a list 'args' which contains the location of the dwi, bvec, bval, anatomical, reference, mask, and output directory
-				2. For functional data, ...
+				2. [Functional modality currently commented out, resulteing in lv_mask not being generated]
+			6. Print out what is in args to double-check paths and files
+			7. Send relevant files to ndmg_dwi_pipeline()
+			8. Removed files determined to be deleted by user (debug = False, big =False, etc.)
 		Outputs:
 			None
 			
 			
 	get_atlas( )
 		Inputs:
-		
+			atlas_dir = the directory containing the atlases
+			modality = what you are analyzing, "dwi" or "func"
+			vox_size = the voxel size to use for template registrations
 		Description:
-		
+			1. Check if specified voxel size is 2mm or 1mm, if it is then set dimension 'dims' to '2x2x2' or '1x1x1' respectfully. If voxel size given is different from either of those choices, raise an Error
+			2. If the modality is set to 'dwi', make sure that the atlas directory exists (if it doesn't, download it from github.com/neurodata/neuroparc.git) then go throught the atlas directory and assign:
+				1. atlas = T1 weighted mask of reference brains of the given resolution
+				2. atlas_mask = T1 weighted mask of reference brains of the given resolution
+				3. labels = labeling files for various areas of the brain depending on your atlas choice
+			3. If the modality is set to 'func', then go through the atlas directory to find the same info [CURRENTLY COMMENTED OUT]
+			4. Check to make sure that all the reference files exist before organizing them to return to session_level( )
 		Outputs:
-		
+			labels = 
+			atlas = 
+			atlas_mask =
+			atlas_brain = 
+			lv_mask = [CURRENTLY NOT MADE, DEFAULT = NoneType]
 		
 ndmg_dwi_pipeline.py
 Purpose: To create a brain connectome graph from MRI data. This program is where the majority of the analysis is facilitated.
