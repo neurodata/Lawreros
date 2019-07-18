@@ -11,9 +11,14 @@ docker run -ti -v /path/to/local/data:/data bids/ndmg /data/ /data/outputs parti
 
 Questions/Difficulties:
 - In ndmg_bids.session_level, what is being done in args = [[ dw, bval, bvec, anat,...] for (dw, bval, bvec, anat) in zip(dwis, bvals, bvecs, anats)] ?
-- Question 2
-- Question 3
-
+- What on earth is bids_utils.flatten() doing? It appears to just retrieve the path to the output directory?
+- In ndmg_dwi_pipeline, around line 210 the variable 'nodif_B0_iso_path' is assigned a value. This appears to never be used?
+- What is the purpose of gen_utils.execute_cmd? It appears to open a bash command and and execute whatever string is fed to it.
+- In gen_utils.reorient_t1w(), in the first several lines a random string is generated and put into the path for the t1w files. Why do that?
+- gen_utils.reorient_dwi() and reorient_t1w runs several command line fsl functions
+- gen_utils.match_target_vox_res( ) uses nibabel, which is (to the best of my knowledge) not python 3 compatible
+- In gen_utils.make_gtab_and_bmask( ) 'fslroi' and 'bet' commands are run from the command line
+- 
 
 
 
@@ -97,10 +102,10 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 		    	2. Create “namer”, a variable of the name_resource class in bids_utils.py. Namer contains all of the path and settings information for the desired run. It includes: subject, anatomical scan, session, run number, task, resolution, output directory. It also contains functions to edit and recall information contained within
 		    	3. Check if the output directory exists, if not then create the directory
 		    	4. Create the directory tree required for placing the outputs of the analysis and add them to namer
-		    	5. Create derivative and connectome output file names
-		    	6. Begin Preprocessing by performing eddy correction, deleting prexisting dwi files. The commands to run FSL’s eddy_correct program and written into the terminal and the system is then asked to execute the task on the terminal using os.system(cmd) (a really funny way to do that). Eddy correct data is placed into the output directory.
+		    	5. Create derivative and connectome output file names. If you have decded to make big graphs, create paths for those files as well
+		    	6. Begin Preprocessing by performing eddy correction, deleting prexisting dwi files. The commands to run FSL’s eddy_correct program and written into the terminal and the system is then asked to execute the task on the terminal using os.system(cmd). Eddy correct data is placed into the output directory.
 			7. Copy the input bval and bvec files into the output/prep_dwi directory for future use
-    			8. Import read_bvals_bvecs from dipy.io, then proceed to check that the bvec and bval files aren’t corrupted. This is done by making sure that anywhere in the array bvals = 0, bvecs = 0. If there is any point where bvals > 50 and the corresponding bvector is [0,0,0], throw an error.
+    			8. Use dipy.io to check that the bvec and bval files aren’t corrupted. This is done by making sure that anywhere in the array bvals = 0, bvecs = 0. If there is any point where bvals > 50 and the corresponding bvector is [0,0,0], throw an error.
     			9. Rescale the bvecs using rescale_bvec.py in ndmg.preproc, which works by:
         			1. making sure that the bvec array has the dimensions X rows and 3 columns, otherwise it transposes it
         			2. normalizing any value in in bvec that doesn’t have a vector norm close to 0
@@ -108,7 +113,7 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
     			10. Determines the orientation of the preprocessed dwi files by sending them to gen_utils.reorient_dwi( ) and receiving the potentially changed dwi_prep and bvec file paths
     			11. Check the voxel resolution using gen_utils.match_target_vox_res( ) and potentially reslice dwi_prep images
     			12. Build a gradient table using gen_utils.make_gtap_and_bmask( )
-    			13. Get b0 header and affine
+    			13. Get b0 header and affine from dwi eddy corrected file
 			14. Begin analysis of anatomical data by checking to make sure that there are no pre-existing directories with names of what the program will be using. If there are, this program will delete it.
     			15. Reorient the t1w data if necessary by using gen_utlis.reorient_t1w( ), getting the potentially edited path to t1w data back
     			16. Determine where you want the tractography data stored (reg_style) either locally or not
@@ -127,18 +132,18 @@ Purpose: General functions to be used during the pipeline
 			bvecs = location of the rescaled bvec file
 			namer = the namer variable containing all relevant naming data
 		Description:
-		    	1. imports shutil
-    			2. uses os.poopen to open dwi_prep and read the first line of the file, this returns what orientation convention the data is using (Neurological or Radiological)
-    			3. copy dwi_prep and bvecs files into the same output directory but with new names, these will be the files that are re-orientated
-    			4. run os.popen to open dwi_prep and get the qform string (vectors describing how the data is related to realspace)
-    			5. Convert the dwi_prep data to the Radiological format and then reorient it. The same steps are taken whether or not it is in Radiological format, with a simple calling of fslorient -forceradiological added at the end if it isn’t. Reorientation includes:
+		    	1. uses os.poopen to open dwi_prep and read the first line of the file, this returns what orientation convention the data is using (Neurological or Radiological)
+    			2. copy dwi_prep and bvecs files into the same output directory but with new names, these will be the files that are re-orientated
+    			3. run os.popen to open dwi_prep and get the qform string (vectors describing how the data is related to realspace)
+    			4. Convert the dwi_prep data to the Radiological format and then reorient it. The same steps are taken whether or not it is in Radiological format, with a simple calling of fslorient -forceradiological added at the end if it isn’t. Reorientation includes:
         			1. Looking at the qform to determine whether it needs Posterior-Anterior Reorientation (-x -y z)or Inferior-Superior Reorientation (-x y -z). If it doesn’t, then these steps are skipped.
         			2. calling fslswapdim to reorient the data and save it as either /output/prep_dwi/dwi_reor_Pa.nii.gz or .../dwi_reor_IS.nii.gz
         			3. changing the bvecs accordingly to account for the reorientation ans saving them over the existing bvec files
         			4. saving the new dwi files over the existing ones if reorientation occurred
-        		6. return values
+        		5. return values
 		Outputs:
-			t1w = location of t1w data
+			dwi = location of eddy corrected and potentially reoriented dwi data
+			bvecs = location of b-vector file, potentially reorientated if dwi data was
 
 	match_target_vox_res( )
 		Reslices input MRI file if it doesn’t match the targeted voxel resolution. Can take dwi or t1w scans.
