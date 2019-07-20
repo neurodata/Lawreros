@@ -125,7 +125,8 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
     			16. Determine where to calculate the tractography (reg_style): native = map atlas to subject, native-DSN = map streamlines to atlas, mni = map subject to atlas
 				1. If reg_style = native or native-DSN. Create gen_reg.dmri_reg class 'reg', this class contains many methods that will be used
 				2. Use reg.gen_tissue to extract the brain from the raw t1w image, create WM, GM, and CSF masks, reslices all 4 files to the target voxel resolution and extracts the white matter edge
-				3. Use reg.t1w2dwi_align to 
+				3. Use reg.t1w2dwi_align to create several transform matricies and warp coefficient files for mapping t1w -> dwi, t1w -> mni and their inverses
+				4. use reg.tissue2dwi_align to
 			17. 
 			
 		Outputs:
@@ -221,19 +222,36 @@ Purpose:
 					none
 				Description:
 					1. Use reg_utils.align() to run FSL's flirt command on the extracted t1w brain to allign it with the MNI template of the same voxel resolution and save the transform matrix to '.../output/tmp/reg_m/xfm_t1w2mni_init.mat'
-					2. Attempt to perform a non-linear registration of the t1w image to the MNI template.
+					2. Attempt to perform a non-linear registration of the t1w image to the MNI template using reg_utils.align_nonlinear, which uses 'fnirt' to attempt to register the image and create an output image, warped t1w image
+						1. If successful, take the warp coefficient file for going from t1w -> mni and invert it using reg_utils.inverse_warp to get a warp coefficient file for going form mni -> t1w
+						2. Use the 'convert_xfm' function from fsl to get the transform matrix from mni -> t1w by inverting the transform matrix of t1w -> mni.
+						
+						1. If not successful, use reg_utils.align() to linearly align t1w to mni and create the t1w -> mni transform matrix (no warp coefficient files made this way)
+					3. Align t1w to dwi by using ret_utils.align() again, but with the averaged b0 image file and the extracted t1w brain
+					4. Use the 'convert_xfm' function from fsl to get the transform matrix from t1w -> dwi and invert it to dwi -> t1w
+					5. Attempt to run FLIRT's BBR registration to mat t1w -> dwi by running ret_utils.align() to map the averaged b0 image onto the t1w brain
+						1. If successful, use fsl's 'convert_sfm' command to invert the resulting transform matrix from dwi -> t1w to t1w -> dwi
+						2. Run ret_utils.align() again, using the t1w -> dwi matrix to map the t1w brain onto the averaged b0 image. This saves the newly mapped t1w image and the transform matrix used to create it.
+						
+						1. If not successful, simply run reg_utils.align to do the same thing as step 2 of the successful outcome.
 				Output:
 			
 			atlas2t1w2dwi_align():
 				Inputs:
 				
 				Description:
-				
+					1. 
+					2. 
+					3. 
 				Output:
+				
 			tissue2dwi_align():
-				 Inputs:
+				Inputs:
 				
 				Description:
+					1. 
+					2.
+					3.
 				
 				Output:
 		
