@@ -21,6 +21,12 @@ Questions/Difficulties:
 - reg_utils.t1w_skullstrip executes '3dSkullStrip' commands
 - the gen_reg.dmri_reg class contains the namer class, is there anyway to just combine them at the beginning?
 - reg_utils.segment_t1w executes 'fast' commands
+- Pretty much all of reg_utils.py executes command line AFNI or FSL functions
+- gen_reg.dmri_reg.gen_tissue executes 'fslmaths' command
+- gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
+-
+-
+
 
 
 The notes below give a simplified explaination of the process the pipeline follows:
@@ -117,7 +123,9 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 			14. Begin analysis of anatomical data by checking to make sure that there are no pre-existing directories with names of what the program will be using. If there are, this program will delete it.
     			15. Reorient the t1w data if necessary by using gen_utlis.reorient_t1w( ), getting the potentially edited path to t1w data back
     			16. Determine where to calculate the tractography (reg_style): native = map atlas to subject, native-DSN = map streamlines to atlas, mni = map subject to atlas
-				1.If reg_style = native or native-DSN. Create gen_reg.dmri_reg class 'reg'
+				1. If reg_style = native or native-DSN. Create gen_reg.dmri_reg class 'reg', this class contains many methods that will be used
+				2. Use reg.gen_tissue to extract the brain from the raw t1w image, create WM, GM, and CSF masks, reslices all 4 files to the target voxel resolution and extracts the white matter edge
+				3. Use reg.t1w2dwi_align to 
 			17. 
 			
 		Outputs:
@@ -160,7 +168,7 @@ Purpose: General functions to be used during the pipeline
         			1. copy the existing image file to the same directory, adding “_pre_res” to the end of it
         			2. run dipy’s reslice function on the data to get it to the new resolution, then take the data and nibable.Nifti1Image to convert the data into a image file that you can save over the existing image file. Also include the qform, sform, and header information into the nifti file
 		Outputs:
-			img_file = path the the image file that has been resliced
+			img_file = path the the image file that may have been resliced
 
 	make_gtab_and_bmask( )
 		Takes bval and bvec files and produces a structure in dipy format
@@ -202,19 +210,33 @@ Purpose:
 				Inputs:
 					none
 				Description:
-					1. Extracts brain from raw t1w data and saves it as a seperate file with reg_utils.t1w_skullstrip()
-					2.
-					3.
+					1. Extracts brain from raw t1w data and saves it as a seperate file with the "AFNI's 3dSkullStrip algorithm" in reg_utils.t1w_skullstrip()
+					2. Takes the extracted brain and segments it into probability maps using reg_utils.segment_t1w(), which runs FSL's FAST to segment the image into the grey matter, white matter, and CSF probability maps (masks). It returns the location of the segmented files ('.../output/anat/preproc/t1w_seg/pve*')
+					3. Use gen_utils.match_target_vox_rex( ) to reslice the extracted t1w brain image, white matter mask, grey matter mask, and csf mask and save them
+					4. Filter the white-matter mask so that any value below 0.2 is ignored (this ignores all non-white-matter) and use fslmaths to extracte the white matter edge and save it					
 				Output:
-			t1wdwi_align():
-			
+					
+			t1w2dwi_align():
+				Inputs:
+					none
+				Description:
+					1. Use reg_utils.align() to run FSL's flirt command on the extracted t1w brain to allign it with the MNI template of the same voxel resolution and save the transform matrix to '.../output/tmp/reg_m/xfm_t1w2mni_init.mat'
+					2. Attempt to perform a non-linear registration of the t1w image to the MNI template.
+				Output:
 			
 			atlas2t1w2dwi_align():
-			
+				Inputs:
+				
+				Description:
+				
+				Output:
 			tissue2dwi_align():
-				 
-		Outputs:
-			self
+				 Inputs:
+				
+				Description:
+				
+				Output:
+		
 			
 	dmri_reg_old <Class>
 		
