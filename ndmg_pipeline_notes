@@ -24,7 +24,7 @@ Questions/Difficulties:
 - Pretty much all of reg_utils.py executes command line AFNI or FSL functions
 - gen_reg.dmri_reg.gen_tissue executes 'fslmaths' command
 - gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
--
+- ndmg_dwi_pipeline, right after the comment "----- Tensor Fitting and Fiber Tractography -----", the first if/else statement has no purpose being an if/else statement since they both do the same thing
 -
 
 
@@ -126,7 +126,11 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 				1. If reg_style = native or native-DSN. Create gen_reg.dmri_reg class 'reg', this class contains many methods that will be used
 				2. Use reg.gen_tissue to extract the brain from the raw t1w image, create WM, GM, and CSF masks, reslices all 4 files to the target voxel resolution and extracts the white matter edge
 				3. Use reg.t1w2dwi_align to create several transform matricies and warp coefficient files for mapping t1w -> dwi, t1w -> mni and their inverses
-				4. use reg.tissue2dwi_align to
+				4. use reg.tissue2dwi_align to create several masks of grey-matter, white-matter, ventricles, and csf in the subject's dwi space
+				5. Begin tensor fitting and fiber tractography by creating a seeds list from the white-matter grey-matter dwi mask
+				6. Create
+				
+				1. If reg_style = mni, 
 			17. 
 			
 		Outputs:
@@ -223,7 +227,7 @@ Purpose:
 				Description:
 					1. Use reg_utils.align() to run FSL's flirt command on the extracted t1w brain to allign it with the MNI template of the same voxel resolution and save the transform matrix to '.../output/tmp/reg_m/xfm_t1w2mni_init.mat'
 					2. Attempt to perform a non-linear registration of the t1w image to the MNI template using reg_utils.align_nonlinear, which uses 'fnirt' to attempt to register the image and create an output image, warped t1w image
-						1. If successful, take the warp coefficient file for going from t1w -> mni and invert it using reg_utils.inverse_warp to get a warp coefficient file for going form mni -> t1w
+						1. If successful, take the warp coefficient file for going from t1w -> mni and invert it using reg_utils.inverse_warp to get a warp coefficient file for going from mni -> t1w
 						2. Use the 'convert_xfm' function from fsl to get the transform matrix from mni -> t1w by inverting the transform matrix of t1w -> mni.
 						
 						1. If not successful, use reg_utils.align() to linearly align t1w to mni and create the t1w -> mni transform matrix (no warp coefficient files made this way)
@@ -235,23 +239,19 @@ Purpose:
 						
 						1. If not successful, simply run reg_utils.align to do the same thing as step 2 of the successful outcome.
 				Output:
-			
-			atlas2t1w2dwi_align():
-				Inputs:
-				
-				Description:
-					1. 
-					2. 
-					3. 
-				Output:
 				
 			tissue2dwi_align():
 				Inputs:
 				
 				Description:
-					1. 
-					2.
-					3.
+					1. Executes FSL's 'fslroi' and 'fslmaths' command to create a ventricle mask for the chosen MNI atlas
+					2. use reg_utils.align in order to create a tranform matrix from the atlas onto the MNI t1w image
+					3. use reg_utils.applyxfm, which executes FSL's 'flirt' command in order create an aligned atlas to the MNI t1w image
+					5. if the attempt to perform a non-linear registration of the t1w image to the MNI template was successful (see t1w2dwi_align), apply the warp coefficient file from mni -> t1w onto the ventricle mask to warp it into the subject's t1w space and save the resulting image using reg_utils.apply_warp
+					6. use reg_utils.applyxfm to map the ventricle, white matter, grey matter, and csf masks onto the averaged b0 image, creating masks in the subjects dwi space for each of them
+					7. proceed to threshold these masks by converting them to binary (masked area = 1, everything else = 0) and save the resulting files
+					8. use 'fslmaths' to create a mask containing both the ventricles and csf
+					9. use 'fslmaths' to create a grey matter-white matter interface image
 				
 				Output:
 		
