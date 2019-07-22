@@ -25,7 +25,8 @@ Questions/Difficulties:
 - gen_reg.dmri_reg.gen_tissue executes 'fslmaths' command
 - gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
 - ndmg_dwi_pipeline, right after the comment "----- Tensor Fitting and Fiber Tractography -----", the first if/else statement has no purpose being an if/else statement since they both do the same thing
--
+- in gen_track.run_track.prep_track the tiss_class variable is assigned 'act', which makes the following if and elif useless
+- in ndmg_dwi_pipeline, why 60 mm in "streamlines = Streamlines([sl for sl in streamlines if len(sl) > 60])"?
 
 
 
@@ -89,11 +90,6 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 			lv_mask = [CURRENTLY NOT MADE, DEFAULT = NoneType]
 
 
-bids_utils.py
-Purpose:
-
-
-
 
 
 
@@ -128,10 +124,15 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 				3. Use reg.t1w2dwi_align to create several transform matricies and warp coefficient files for mapping t1w -> dwi, t1w -> mni and their inverses
 				4. use reg.tissue2dwi_align to create several masks of grey-matter, white-matter, ventricles, and csf in the subject's dwi space
 				5. Begin tensor fitting and fiber tractography by creating a seeds list from the white-matter grey-matter dwi mask
-				6. Create
+				6. Create 'tract', a variable of the gen_track.run_track class for deterministic tractography in native space. This variable contains the paths for the masks, brain, seeds, and gtab in the participant's dwi space
+				7. run trct.run() in order to get the ArraySequence of tractography tracks raw data and assign it to the variable 'streamlines'
+				8. go through the streamlines using dipy.tracking.streamline.Streamlines and remove any streamlines with a length less than 60
+				9. If reg_style = 'native_dsn' then warp the streamlines to mni space [come back to this to analyze it]
 				
-				1. If reg_style = mni, 
-			17. 
+				1. If reg_style = mni, use gen_utils.match_target_vox_res to reslice the t1w image to the right voxel size
+				2. [Come back to notate when running the pipeline again]
+				3.
+			17. If big=True, begin generating big graphs from the streamlines by
 			
 		Outputs:
 
@@ -265,7 +266,46 @@ Purpose:
 			dwi2atlas():
 			
 			
-			
-		
 		Outputs:
 		
+gen_track.py
+Purpose:
+
+	run_track <class>
+		Creates a variable to contain the detereministic tractography
+		
+			run():
+				Inputs:
+					dwi_in = path to the input dwi image
+					nodif_B0_mask = path to the b0 mean volume mask
+					gm_in_dwi = path to grey matter segmentation in EPI space
+					vent_csf_in_dwi = path to ventricular CSF mask in EPI space
+					csf_in_dwi = path to the csf mask
+					wm_in_dwi = path to white matter probabilities
+					gtab = gradient table made from bvec and bval
+					mod_type = model type
+					track_type = tracking approach
+					mod_func = diffusion model
+					seeds = seeds for tractography
+					stream_affine = 4x4 2D array
+				Description:
+					1. Prepare for the use of tracks by creating a tissue classifier using prep_tracking()
+					2. depending on what you have specified for your track_type and mod_type, run the matching dipy analysis programs
+					3. return tractography tracks data in the form of an ArraySequence
+					
+				Output:
+					tracks = tractography tracks
+				
+			prep_tracking():
+				Inputs:
+				
+				Description:
+					1. Loads in the dwi data from the file
+					2. Load in tissue maps for the gm, wm, csf and convert them to arrays to serve as masks
+					3. Depending on the tissue class you specify, call the respective tissue classifier to make 
+				Output:
+					self.tiss_classifier = tissue classifier object, depends on what tissue class you use
+			
+
+
+
