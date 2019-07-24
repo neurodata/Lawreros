@@ -1,5 +1,7 @@
 Getting Started:
 
+ndmg currently runs inside a docker container, stored here on dockerhub: neurodata/ndmg_dev:latest
+
 The ndmg pipeline can be used to generate connectomes as a command-line utility on BIDS datasets with the following command:
 
 ndmg_bids /input/bids/dataset /output/directory participant
