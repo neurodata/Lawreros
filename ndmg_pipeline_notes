@@ -29,8 +29,10 @@ Questions/Difficulties:
 - ndmg_dwi_pipeline, right after the comment "----- Tensor Fitting and Fiber Tractography -----", the first if/else statement has no purpose being an if/else statement since they both do the same thing
 - in gen_track.run_track.prep_track the tiss_class variable is assigned 'act', which makes the following if and elif useless
 - in ndmg_dwi_pipeline, why 60 mm in "streamlines = Streamlines([sl for sl in streamlines if len(sl) > 60])"?
-
-
+- Not sure what is going on in gen_biggraph.make_graph and how it finds the edges/nodes
+- reg_utlis.py has multiple duplicate functions in it, like segment_t1w
+- in gen_reg there is a 'simple' variable that I am unable to find the origin of, it is always set to false
+- 
 
 The notes below give a simplified explaination of the process the pipeline follows:
 
@@ -134,7 +136,12 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 				1. If reg_style = mni, use gen_utils.match_target_vox_res to reslice the t1w image to the right voxel size
 				2. [Come back to notate when running the pipeline again]
 				3.
-			17. If big=True, begin generating big graphs from the streamlines by
+			17. If big=True, begin generating big graphs from the streamlines by first using gen_biggraph.biggraph class to create the variable bgl containing information about the version of ndmg used, time analysis was done, and other other labels. It also creates a defaultdict(int) for putting the edges about to be made
+				1. Make the graph by sending the streamlines to gen_biggraph.make_graph, which proceeds to use numpy to round all the locations of relevant voxels in the streamlines to the nearest mm
+				2. use numpy and XMLMorton to take the streamline data and convert it into nodes and edges and store it in bgl.edge_list
+				3. save the generated graph information by using gen_biggraph.save_graph, which takes the path generated earlier (.../output/voxelg/voxel-connectome.npz) and saves the big graph there
+			18. Begin connectome estimation by using gen_utlis.match_target_vox_res to make sure that the labeling atlas is the desired resolution
+			19. Then use 
 			
 		Outputs:
 
@@ -257,6 +264,19 @@ Purpose:
 					9. use 'fslmaths' to create a grey matter-white matter interface image
 				
 				Output:
+				
+			atlas2t1w2dwi_align():
+				Inputs:
+					atlas = path to atlas file you want to use
+					dsn = whether or not you are using native-dsn
+				Description:
+					1. Takes path of atlas file and use use it to create temp and output file names for the file generate dby this function
+					2. Uses reg_utils.align to align the atlas to the t1 aligned mni file (file that has been mapped onto the t1w file, called alligned_atlas_t1mni)
+					3. If simple!= False (meaning you want to attempt non linear template registration), uses reg_utils.apply_warp to map the atlas_t1mni onto the t1w brain, creating aligned_atlas_skull
+					4. Then use reg_utils.align to map the averaged B0 file into the aligned_atlas_skull, creating the .dwi_aligned_atlas
+					5. If the steps 3-4 fail, then just use reg_utils.align and reg_utils.combing_xfms to accomplish that same task
+					
+					
 		
 			
 	dmri_reg_old <Class>
