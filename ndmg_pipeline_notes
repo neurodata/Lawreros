@@ -48,7 +48,7 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 			
 		Description:
 			1. Reads in the inputs given by the user
-			2. Determines if a s3 bucket is being called and if the path provided is valid. If it is then it reads it in.
+			2. Determines if a s3 bucket is being called and if the path provided is valid. If it is then it reads it in, using any subject/session specifications you've made.
 			3. Passes inputs onto session_level( ) for further analysis
 		Outputs:
 			User input parameters
@@ -67,8 +67,8 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 				1. For dwi data, create a list 'args' which contains the location of the dwi, bvec, bval, anatomical, reference, mask, and output directory
 				2. For func data, create a list 'args' which contains the locations of the func, anatomical, reference, atlas brain, atlas brain mask, lv_mask, labels, and output directory 
 			6. Print out what is in args to double-check paths and files
-			7. Send relevant files to ndmg_dwi_pipeline()
-			8. Removed files determined to be deleted by user (debug = False, big =False, etc.)
+			7. Send relevant files to ndmg_dwi_worker()
+			8. If the modality is set to func and debug is False, remove files
 		Outputs:
 			None
 			
@@ -81,9 +81,9 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 		Description:
 			1. Check if specified voxel size is 2mm or 1mm, if it is then set dimension 'dims' to '2x2x2' or '1x1x1' respectfully. If voxel size given is different from either of those choices, raise an Error
 			2. If the modality is set to 'dwi', make sure that the atlas directory exists (if it doesn't, download it from github.com/neurodata/neuroparc.git) then go throught the atlas directory and assign:
-				1. atlas = T1 weighted mask of reference brains of the given resolution
-				2. atlas_mask = T1 weighted mask of reference brains of the given resolution
-				3. labels = labeling files for various areas of the brain depending on your atlas choice
+				1. atlas = path to T1 weighted mask of reference brains of the given resolution
+				2. atlas_mask = path to T1 weighted mask of reference brains of the given resolution
+				3. labels = path to labeling files for various areas of the brain depending on your atlas choice
 			3. If the modality is set to 'func', then go through the atlas directory to find the same info [CURRENTLY COMMENTED OUT]
 			4. Check to make sure that all the reference files exist before organizing them to return to session_level( )
 		Outputs:
@@ -100,7 +100,7 @@ Purpose: Starting point of the ndmg pipeline, assuming you are using a BIDS orga
 ndmg_dwi_pipeline.py
 Purpose: To create a brain connectome graph from MRI data. This program is where the majority of the analysis is facilitated.
 
-	ndmg_dwi_pipeline( )
+	ndmg_dwi_worker( )
 		Inputs:
 		    
 		Description:
@@ -108,15 +108,15 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 		    	2. Create “namer”, a variable of the name_resource class in bids_utils.py. Namer contains all of the path and settings information for the desired run. It includes: subject, anatomical scan, session, run number, task, resolution, output directory. It also contains functions to edit and recall information contained within
 		    	3. Check if the output directory exists, if not then create the directory
 		    	4. Create the directory tree required for placing the outputs of the analysis and add them to namer
-		    	5. Create derivative and connectome output file names. If you have decded to make big graphs, create paths for those files as well
-		    	6. Begin Preprocessing by performing eddy correction, deleting prexisting dwi files. The commands to run FSL’s eddy_correct program and written into the terminal and the system is then asked to execute the task on the terminal using os.system(cmd). Eddy correct data is placed into the output directory.
+		    	5. Create streamline and connectome output file/directory paths
+		    	6. Begin Preprocessing by performing eddy correction, deleting prexisting preprocessed dwi files if skipeddy is False. Then commands to run FSL’s eddy_correct program are written into the terminal and the system is then asked to execute the task on the terminal using os.system(cmd). Eddy correct data is placed into the output directory.
 			7. Copy the input bval and bvec files into the output/prep_dwi directory for future use
     			8. Use dipy.io to check that the bvec and bval files aren’t corrupted. This is done by making sure that anywhere in the array bvals = 0, bvecs = 0. If there is any point where bvals > 50 and the corresponding bvector is [0,0,0], throw an error.
     			9. Rescale the bvecs using rescale_bvec.py in ndmg.preproc, which works by:
         			1. making sure that the bvec array has the dimensions X rows and 3 columns, otherwise it transposes it
         			2. normalizing any value in in bvec that doesn’t have a vector norm close to 0
         			3. save rescaled bvec data to bvec_scaled.bvec file in /output/dwi/preproc/
-    			10. Determines the orientation of the preprocessed dwi files by sending them to gen_utils.reorient_dwi( ) and receiving the potentially changed dwi_prep and bvec file paths
+    			10. Determine the orientation of the preprocessed dwi files by sending them to gen_utils.reorient_dwi( ) and receiving the potentially changed dwi_prep and bvec file paths
     			11. Check the voxel resolution using gen_utils.match_target_vox_res( ) and potentially reslice dwi_prep images
     			12. Build a gradient table using gen_utils.make_gtap_and_bmask( )
     			13. Get b0 header and affine from dwi eddy corrected file
@@ -156,18 +156,14 @@ Purpose: General functions to be used during the pipeline
 			bvecs = location of the rescaled bvec file
 			namer = the namer variable containing all relevant naming data
 		Description:
-		    	1. uses os.poopen to open dwi_prep and read the first line of the file, this returns what orientation convention the data is using (Neurological or Radiological)
-    			2. copy dwi_prep and bvecs files into the same output directory but with new names, these will be the files that are re-orientated
-    			3. run os.popen to open dwi_prep and get the qform string (vectors describing how the data is related to realspace)
-    			4. Convert the dwi_prep data to the Radiological format and then reorient it. The same steps are taken whether or not it is in Radiological format, with a simple calling of fslorient -forceradiological added at the end if it isn’t. Reorientation includes:
-        			1. Looking at the qform to determine whether it needs Posterior-Anterior Reorientation (-x -y z)or Inferior-Superior Reorientation (-x y -z). If it doesn’t, then these steps are skipped.
-        			2. calling fslswapdim to reorient the data and save it as either /output/prep_dwi/dwi_reor_Pa.nii.gz or .../dwi_reor_IS.nii.gz
-        			3. changing the bvecs accordingly to account for the reorientation ans saving them over the existing bvec files
-        			4. saving the new dwi files over the existing ones if reorientation occurred
-        		5. return values
+			1. load in the eddy correct dwi file using nibabel.load
+			2. Then use nibabel.aff2axcodes to get the axial direction codes from the dwi file, then nibabel.as_closest_canonical which reorients the input dwi file to RAS orientation (left to right, posterior to anterior, inferior to superior)
+			3. Use reg_utils.normalize_xform to [ ]
+			4. If the newly normalized image does not match the original input image, use nibabel to reorient the b-vector information and save it into a file
+			5. Return the paths of the changed dwi and bvec files
 		Outputs:
-			dwi = location of eddy corrected and potentially reoriented dwi data
-			bvecs = location of b-vector file, potentially reorientated if dwi data was
+			out_fname = path to potentially reoriented dwi data
+			out_bvec_fname = path to b-vector file, potentially reorientated if dwi data was
 
 	match_target_vox_res( )
 		Reslices input MRI file if it doesn’t match the targeted voxel resolution. Can take dwi or t1w scans.
@@ -180,8 +176,12 @@ Purpose: General functions to be used during the pipeline
     			1. imports reslice from dipy.align.reslice
     			2. load the image file and get various parameters from it (affine, header, zooms)
     			3. determine if the given voxel size (zooms) is either 1mm or 2 mm. If it is not then:
-        			1. copy the existing image file to the same directory, adding “_pre_res” to the end of it
-        			2. run dipy’s reslice function on the data to get it to the new resolution, then take the data and nibable.Nifti1Image to convert the data into a image file that you can save over the existing image file. Also include the qform, sform, and header information into the nifti file
+        			1. create the path were the resliced images will go, .../output/<sens>/preproc/<img_file>_res.nii.gz
+        			2. run dipy’s reslice function on the data to get it to the new resolution, then take the data and nibable.Nifti1Image to convert the data into a nifti image and save it to the previously made path
+				
+				1. If voxel size is 1mm or 2mm, create the path .../output/<sens>/preproc/<img_file>_nores.nii.gz
+				2. save the input dwi file there
+			4. Return the path to the potentially resliced dwi image file
 		Outputs:
 			img_file = path the the image file that may have been resliced
 
