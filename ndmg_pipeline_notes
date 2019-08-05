@@ -26,12 +26,8 @@ Questions/Difficulties:
 - Pretty much all of reg_utils.py executes command line AFNI or FSL functions
 - gen_reg.dmri_reg.gen_tissue executes 'fslmaths' command
 - gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
-- ndmg_dwi_pipeline, right after the comment "----- Tensor Fitting and Fiber Tractography -----", the first if/else statement has no purpose being an if/else statement since they both do the same thing
 - in gen_track.run_track.prep_track the tiss_class variable is assigned 'act', which makes the following if and elif useless
-- in ndmg_dwi_pipeline, why 60 mm in "streamlines = Streamlines([sl for sl in streamlines if len(sl) > 60])"?
-- Not sure what is going on in gen_biggraph.make_graph and how it finds the edges/nodes
 - reg_utlis.py has multiple duplicate functions in it, like segment_t1w
-- in gen_reg there is a 'simple' variable that I am unable to find the origin of, it is always set to false
 - 
 
 The notes below give a simplified explaination of the process the pipeline follows:
@@ -120,18 +116,19 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
     			11. Check the voxel resolution using gen_utils.match_target_vox_res( ) and potentially reslice dwi_prep images
     			12. Build a gradient table using gen_utils.make_gtap_and_bmask( )
     			13. Get b0 header and affine from dwi eddy corrected file
-			14. Begin analysis of anatomical data by checking to make sure that there are no pre-existing directories with names of what the program will be using. If there are, this program will delete it.
+			14. [if skipreg = True, skip this step] Begin the registration of the structural (t1w) mri data by checking to make sure that there are no pre-existing directories with names of what the program will be using. If there are, this program will delete it.
     			15. Reorient the t1w data if necessary by using gen_utlis.reorient_t1w( ), getting the potentially edited path to t1w data back
     			16. Determine where to calculate the tractography (reg_style): native = map atlas to subject, native-DSN = map streamlines to atlas, mni = map subject to atlas
 				1. If reg_style = native or native-DSN. Create gen_reg.dmri_reg class 'reg', this class contains many methods that will be used
-				2. Use reg.gen_tissue to extract the brain from the raw t1w image, create WM, GM, and CSF masks, reslices all 4 files to the target voxel resolution and extracts the white matter edge
-				3. Use reg.t1w2dwi_align to create several transform matricies and warp coefficient files for mapping t1w -> dwi, t1w -> mni and their inverses
-				4. use reg.tissue2dwi_align to create several masks of grey-matter, white-matter, ventricles, and csf in the subject's dwi space
+				2. [If skipreg = False] Use reg.gen_tissue to extract the brain from the raw t1w image, create WM, GM, and CSF masks, reslices all 4 files to the target voxel resolution and extracts the white matter edge, saving all masks created
+				3. [if skipreg = False] Use reg.t1w2dwi_align to create several transform matricies and warp coefficient files for mapping t1w -> dwi, t1w -> mni and their inverses
+				4. [if skipreg = False] Use reg.tissue2dwi_align to create several masks of grey-matter, white-matter, ventricles, and csf in the subject's dwi space
 				5. Begin tensor fitting and fiber tractography by creating a seeds list from the white-matter grey-matter dwi mask
 				6. Create 'tract', a variable of the gen_track.run_track class for deterministic tractography in native space. This variable contains the paths for the masks, brain, seeds, and gtab in the participant's dwi space
 				7. run trct.run() in order to get the ArraySequence of tractography tracks raw data and assign it to the variable 'streamlines'
-				8. go through the streamlines using dipy.tracking.streamline.Streamlines and remove any streamlines with a length less than 60
-				9. If reg_style = 'native_dsn' then warp the streamlines to mni space [come back to this to analyze it]
+				8. go through the streamlines using dipy.tracking.streamline.Streamlines and remove any streamlines with a length less than 60. Then create a .trk streamline file in .../output/dwi/fiber/streamlines.trk
+				9. If reg_style = 'native_dsn' then create a tensor FA image to use for registrations and save it at .../output/dwi/preproc/tensor_fa.nii.gz
+				---> <----
 				
 				1. If reg_style = mni, use gen_utils.match_target_vox_res to reslice the t1w image to the right voxel size
 				2. [Come back to notate when running the pipeline again]
@@ -241,7 +238,7 @@ Purpose:
 						2. Use the 'convert_xfm' function from fsl to get the transform matrix from mni -> t1w by inverting the transform matrix of t1w -> mni.
 						
 						1. If not successful, use reg_utils.align() to linearly align t1w to mni and create the t1w -> mni transform matrix (no warp coefficient files made this way)
-					3. Align t1w to dwi by using ret_utils.align() again, but with the averaged b0 image file and the extracted t1w brain
+					3. Align t1w to dwi by using reg_utils.align() again, but with the averaged b0 image file and the extracted t1w brain
 					4. Use the 'convert_xfm' function from fsl to get the transform matrix from t1w -> dwi and invert it to dwi -> t1w
 					5. Attempt to run FLIRT's BBR registration to mat t1w -> dwi by running ret_utils.align() to map the averaged b0 image onto the t1w brain
 						1. If successful, use fsl's 'convert_sfm' command to invert the resulting transform matrix from dwi -> t1w to t1w -> dwi
