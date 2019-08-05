@@ -1,0 +1,16 @@
+Getting Docker:
+1. Install docker
+Ubuntu = https://docs.docker.com/install/linux/docker-ce/ubuntu/
+Mac =
+
+Docker file -> Docker image:
+1. Download the most recent version of ndmg from github
+2. In the ndmg directory created, there should be a file called Dockerfile, using the command:
+      docker build --rm -f "path/to/docker/file" -t ndmg:whateverlabelyouwant ndmg
+Additional Notation -> https://docs.docker.com/engine/reference/commandline/image_build/
+3. This should take several minutes if this is the first time you have used this docker file
+
+Docker image -> Docker container:
+1. In order to create a docker container from the docker image you have just created, use the following command:
+      docker run -it --entrypoint /bin/bash ndmg:whateverlabelyouwant
+   This should allow you to enter the container and execute commands.
