@@ -126,19 +126,22 @@ Purpose: To create a brain connectome graph from MRI data. This program is where
 				5. Begin tensor fitting and fiber tractography by creating a seeds list from the white-matter grey-matter dwi mask
 				6. Create 'tract', a variable of the gen_track.run_track class for deterministic tractography in native space. This variable contains the paths for the masks, brain, seeds, and gtab in the participant's dwi space
 				7. run trct.run() in order to get the ArraySequence of tractography tracks raw data and assign it to the variable 'streamlines'
-				8. go through the streamlines using dipy.tracking.streamline.Streamlines and remove any streamlines with a length less than 60. Then create a .trk streamline file in .../output/dwi/fiber/streamlines.trk
-				9. If reg_style = 'native_dsn' then create a tensor FA image to use for registrations and save it at .../output/dwi/preproc/tensor_fa.nii.gz
-				---> <----
-				
+				8. go through the streamlines using dipy.tracking.streamline.Streamlines and remove any streamlines with a length less than 40. Then create a .trk streamline file in .../output/dwi/fiber/streamlines.trk
+				9. If reg_style = 'native_dsn' then use gen_track.tens_mod_fa_est to create a tensor FA image to use for registrations and save it at .../output/dwi/preproc/tensor_fa.nii.gz
+					1. Send the streamlines and the FA image to gen_reg.direct_streamline_norm in order to get the warped streamlines and the path to the created tractogram file .../dwi/fiber/streamlines_dsn.trk
+					[Note: inside direct_streamline_norm is where DSN QC plotting occurs]
+					
 				1. If reg_style = mni, use gen_utils.match_target_vox_res to reslice the t1w image to the right voxel size
 				2. [Come back to notate when running the pipeline again]
 				3.
-			17. If big=True, begin generating big graphs from the streamlines by first using gen_biggraph.biggraph class to create the variable bgl containing information about the version of ndmg used, time analysis was done, and other other labels. It also creates a defaultdict(int) for putting the edges about to be made
-				1. Make the graph by sending the streamlines to gen_biggraph.make_graph, which proceeds to use numpy to round all the locations of relevant voxels in the streamlines to the nearest mm
-				2. use numpy and XMLMorton to take the streamline data and convert it into nodes and edges and store it in bgl.edge_list
-				3. save the generated graph information by using gen_biggraph.save_graph, which takes the path generated earlier (.../output/voxelg/voxel-connectome.npz) and saves the big graph there
-			18. Begin connectome estimation by using gen_utlis.match_target_vox_res to make sure that the labeling atlas is the desired resolution
-			19. Then use 
+			17. Begin connectome estimation by first determining which registration style you are using:
+				1. If reg_style = native_dsn, use gen_utils.reorient_img to reorient the labeled atlas brain to RAS+ orientation
+				2. Use gen_utils.match_target_vox_res to reslice the reoriented atlas brain to the desired voxel resolution
+				3. Use gen_reg.atlas2t1w2dwi_align to transform the labeled atlas brain into dwi space
+				4. 
+				
+				1. if reg_style = native,
+			18. Then use 
 			
 		Outputs:
 
@@ -286,6 +289,26 @@ Purpose:
 			
 			
 		Outputs:
+		
+	direct_streamline_norm():
+		Inputs:
+			streams = path to streamline.trk file
+			fa_path = path to FA tensor image
+			namer = name_resource variable
+		Decription:
+			1. Load in FA image and the reference FA image (located in .../atlases/reference_brains/)
+			2. Use reg_utils.wm_syn() in order to get the Diffeomorphic map and affine map for transforming the FA image into the reference FA image
+			3. Edit the affine map by:
+				1. making a copy of it
+				2. inverting the x and y planes of the copy
+				3. scaling the z plane by the voxel size
+				4. scaling the y plane by the square of the voxel size
+			4. Use the function dipy.tracking.streamline.deform_streamlines to warp the streamlines into the reference FA space
+			5. save the streamlines
+		Output:
+			mapping = DiffeomorphicMap for FA to template
+			affine_map = AffineMap for Fa to template
+		
 		
 gen_track.py
 Purpose:
