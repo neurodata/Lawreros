@@ -1,3 +1,5 @@
+[PLEASE FEEL FREE TO EDIT OR ELABORATE]
+
 Getting Started:
 
 ndmg currently runs inside a docker container, stored here on dockerhub: neurodata/ndmg_dev:latest
@@ -13,8 +15,6 @@ docker run -ti -v /path/to/local/data:/data bids/ndmg /data/ /data/outputs parti
 
 Questions/Difficulties:
 - In ndmg_bids.session_level, what is being done in args = [[ dw, bval, bvec, anat,...] for (dw, bval, bvec, anat) in zip(dwis, bvals, bvecs, anats)] ?
-- What on earth is bids_utils.flatten() doing? It appears to just retrieve the path to the output directory?
-- In ndmg_dwi_pipeline, around line 210 the variable 'nodif_B0_iso_path' is assigned a value. This appears to never be used?
 - What is the purpose of gen_utils.execute_cmd? It appears to open a bash command and and execute whatever string is fed to it.
 - In gen_utils.reorient_t1w(), in the first several lines a random string is generated and put into the path for the t1w files. Why do that?
 - gen_utils.reorient_dwi() and reorient_t1w( ) runs several command line fsl functions
@@ -28,7 +28,8 @@ Questions/Difficulties:
 - gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
 - in gen_track.run_track.prep_track the tiss_class variable is assigned 'act', which makes the following if and elif useless
 - reg_utlis.py has multiple duplicate functions in it, like segment_t1w
-- 
+
+
 
 The notes below give a simplified explaination of the process the pipeline follows:
 
@@ -280,7 +281,7 @@ Purpose:
 		
 			
 	dmri_reg_old <Class>
-		
+		This function is used when reg_style = 'mni'
 		Inputs:
 		
 		Description:
