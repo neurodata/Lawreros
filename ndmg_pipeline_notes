@@ -28,6 +28,7 @@ Questions/Difficulties:
 - gen_reg.dmri_reg.t1w2dwi_align uses the 'convert_xfm' command, need to look into whether that is part of fsl
 - in gen_track.run_track.prep_track the tiss_class variable is assigned 'act', which makes the following if and elif useless
 - reg_utlis.py has multiple duplicate functions in it, like segment_t1w
+	- extract_brain is there twice but with different default "opts" values
 
 
 
