@@ -6,8 +6,8 @@ session = boto3.Session(aws_access_key_id='', aws_secret_access_key='')
 s3 = boto3.resource('s3')
 
 bucket = s3.Bucket('ndmg-data')
-original_dir = 'SWU4'
-new_dir = 'SWU4-KeyError'
+original_dir = ''
+new_dir = ''
 
 #%% Search and output dict with all file paths
 for obj in bucket.objects.filter(Prefix=f'{original_dir}/sub'):
