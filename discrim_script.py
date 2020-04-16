@@ -648,26 +648,26 @@ def _discr_rdf(dissimilarities, labels):
     return out
 
 
-atlases = ['_mask_DKT_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DKT_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_CPAC200_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..CPAC200_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_aal_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..aal_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00140_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00140_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00583_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00583_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_HarvardOxfordcort-maxprob-thr25_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..HarvardOxfordcort-maxprob-thr25_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00446_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00446_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00096_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00096_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_JHU_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..JHU_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00071_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00071_space-MNI152NLin6_res-2x2x2.nii.gz',
+atlases = ['_mask_aal_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..aal_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_brodmann_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..brodmann_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_HarvardOxfordsub-maxprob-thr25_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..HarvardOxfordsub-maxprob-thr25_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00833_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00833_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00350_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00350_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS01216_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS01216_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_princetonvisual-top_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..princetonvisual-top_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00195_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00195_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_CPAC200_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..CPAC200_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_desikan_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..desikan_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DKT_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DKT_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DS00071_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00071_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DS00096_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00096_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_DS00108_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00108_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DS00140_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00140_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DS00195_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00195_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_DS00278_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00278_space-MNI152NLin6_res-2x2x2.nii.gz'
+    '_mask_DS00350_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00350_space-MNI152NLin6_res-2x2x2.nii.gz',
+    #'_mask_DS00446_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00446_space-MNI152NLin6_res-2x2x2.nii.gz',
+    #'_mask_DS00583_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00583_space-MNI152NLin6_res-2x2x2.nii.gz',
+    #'_mask_DS00833_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00833_space-MNI152NLin6_res-2x2x2.nii.gz',
+    #'_mask_DS01216_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS01216_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_HarvardOxfordcort-maxprob-thr25_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..HarvardOxfordcort-maxprob-thr25_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_HarvardOxfordsub-maxprob-thr25_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..HarvardOxfordsub-maxprob-thr25_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_JHU_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..JHU_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_princetonvisual-top_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..princetonvisual-top_space-MNI152NLin6_res-2x2x2.nii.gz',
 ]
 
 discrim = {}
@@ -675,5 +675,4 @@ for atlas in atlases:
     m = NdmgStats(f'/IPCAS_6/{atlas}/NEW') # grabs every edgelist file in a local ndmg
     discrim[atlas]=m.discriminability()
     print(f"{atlas} analyzed")
-
 print('oof')
