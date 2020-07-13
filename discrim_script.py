@@ -1,5 +1,3 @@
-#from graphutils.graph_stats import NdmgStats
-#n = NdmgStats('s3://ndmg-data/SWU4/SWU4-2-8-20-m2g_staging-native-csa-det/')
 # downloads every edgelist file on s3 into a local temp directory using `boto3`
 #%%
 """graph_stats : functionality for computing statistics on ndmg directories.
@@ -658,9 +656,9 @@ atlases = ['_mask_aal_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlas
     '_mask_DS00108_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00108_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_DS00140_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00140_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_DS00195_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00195_space-MNI152NLin6_res-2x2x2.nii.gz',
-    '_mask_DS00278_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00278_space-MNI152NLin6_res-2x2x2.nii.gz'
+    '_mask_DS00278_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00278_space-MNI152NLin6_res-2x2x2.nii.gz',
     '_mask_DS00350_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00350_space-MNI152NLin6_res-2x2x2.nii.gz',
-    #'_mask_DS00446_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00446_space-MNI152NLin6_res-2x2x2.nii.gz',
+    '_mask_DS00446_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00446_space-MNI152NLin6_res-2x2x2.nii.gz',
     #'_mask_DS00583_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00583_space-MNI152NLin6_res-2x2x2.nii.gz',
     #'_mask_DS00833_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS00833_space-MNI152NLin6_res-2x2x2.nii.gz',
     #'_mask_DS01216_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..DS01216_space-MNI152NLin6_res-2x2x2.nii.gz',
@@ -670,9 +668,14 @@ atlases = ['_mask_aal_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlas
     '_mask_princetonvisual-top_space-MNI152NLin6_res-2x2x2_mask_file_..m2g_atlases..atlases..label..Human..princetonvisual-top_space-MNI152NLin6_res-2x2x2.nii.gz',
 ]
 
+paths = ['/NYU_2']
+
 discrim = {}
-for atlas in atlases:
-    m = NdmgStats(f'/IPCAS_6/{atlas}/NEW') # grabs every edgelist file in a local ndmg
-    discrim[atlas]=m.discriminability()
-    print(f"{atlas} analyzed")
+for path in paths:
+    discrim[path]={}
+    for atlas in atlases:
+        m = NdmgStats(f'{path}/{atlas}/NEW') # grabs every edgelist file in a local ndmg
+        discrim[path][atlas]=m.discriminability()
+        print(f"{atlas} analyzed")
+print('oof')
 print('oof')
